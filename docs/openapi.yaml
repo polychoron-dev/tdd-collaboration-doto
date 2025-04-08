@@ -1,0 +1,471 @@
+openapi: 3.0.0
+info:
+  title: "Todo Shared App API"
+  description: "API for managing groups and todos in a shared todo application. Authentication is via JWT token."
+  version: "1.0.0"
+servers:
+  - url: "http://localhost:8000"
+paths:
+  /auth/google/login:
+    get:
+      summary: "Initiate Google OAuth Login"
+      description: "Redirects the user to Google's OAuth login page."
+      responses:
+        '302':
+          description: "Redirection to Google OAuth login page"
+      security: []  # No JWT required
+  /auth/google/callback:
+    get:
+      summary: "Google OAuth Callback"
+      description: "Receives the OAuth callback from Google and exchanges the code for JWT and other tokens."
+      parameters:
+        - name: code
+          in: query
+          description: "OAuth authorization code provided by Google."
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: "Redirection to the application (token exchange complete)"
+      security: []  # No JWT required
+  /groups:
+    get:
+      summary: "Get Groups"
+      description: "Retrieve the list of groups the authenticated user belongs to."
+      responses:
+        '200':
+          description: "List of groups"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+      security:
+        - bearerAuth: []
+    post:
+      summary: "Create Group"
+      description: "Creates a new group."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewGroup"
+      responses:
+        '201':
+          description: "Group created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}:
+    get:
+      summary: "Get Group Details"
+      description: "Retrieve details of a specific group, including its todos."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Group details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+      security:
+        - bearerAuth: []
+    put:
+      summary: "Update Group"
+      description: "Update group information."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroup"
+      responses:
+        '200':
+          description: "Group updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+      security:
+        - bearerAuth: []
+    delete:
+      summary: "Delete Group"
+      description: "Deletes a group. Only the owner can delete."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: "Group deleted successfully"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/members:
+    get:
+      summary: "Get Group Members"
+      description: "Retrieve all members of a specific group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "List of group members"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
+      security:
+        - bearerAuth: []
+    post:
+      summary: "Invite Group Member"
+      description: "Invite a new member to the group using their Gmail address."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteMember"
+      responses:
+        '201':
+          description: "Invitation sent"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/members/{user_id}:
+    delete:
+      summary: "Remove Group Member"
+      description: "Removes a member from the group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: "Member removed successfully"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/todos:
+    get:
+      summary: "Get Group Todos"
+      description: "Retrieve all todos for a specific group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "List of todos"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+    post:
+      summary: "Create Todo"
+      description: "Create a new todo within the group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTodo"
+      responses:
+        '201':
+          description: "Todo created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/todos/{todo_id}:
+    get:
+      summary: "Get Todo"
+      description: "Retrieve details of a specific todo within a group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Todo details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+    put:
+      summary: "Update Todo"
+      description: "Update an existing todo's details."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTodo"
+      responses:
+        '200':
+          description: "Todo updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+    delete:
+      summary: "Delete Todo"
+      description: "Deletes a specific todo from the group."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: "Todo deleted successfully"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/todos/{todo_id}/complete:
+    post:
+      summary: "Mark Todo as Complete"
+      description: "Marks a todo as completed."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Todo marked as complete"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+  /groups/{group_id}/todos/{todo_id}/incomplete:
+    post:
+      summary: "Mark Todo as Incomplete"
+      description: "Reopens a completed todo, marking it as incomplete."
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Todo marked as incomplete"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        owner_id:
+          type: string
+      required:
+        - id
+        - name
+        - owner_id
+    NewGroup:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - name
+    UpdateGroup:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: string
+        group_id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+      required:
+        - id
+        - group_id
+        - email
+        - role
+        - status
+    InviteMember:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+      required:
+        - email
+        - role
+    Todo:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+        completed:
+          type: boolean
+      required:
+        - id
+        - title
+        - description
+        - due_date
+        - priority
+        - completed
+    NewTodo:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+      required:
+        - title
+        - description
+        - due_date
+        - priority
+    UpdateTodo:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+        completed:
+          type: boolean
