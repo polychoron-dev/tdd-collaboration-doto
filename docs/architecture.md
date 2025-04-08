@@ -38,16 +38,25 @@ project-root/
 │   │   └── utils/                 # 共通ユーティリティ
 │   │       ├── __init__.py
 │   │       └── supabase_client.py # Supabase APIクライアントのラッパー
-│   ├── tests/                     # TDD用テストコード
-│   │   ├── __init__.py
-│   │   ├── conftest.py            # 共通フィクスチャ、テスト設定
-│   │   ├── test_auth.py           # 認証系のテスト
-│   │   ├── test_groups.py         # グループ管理機能のテスト
-│   │   ├── test_members.py        # グループメンバー管理のテスト
-│   │   └── test_todos.py          # Todo管理機能のテスト
-│   ├── scripts/                   # 補助スクリプト（Supabaseのマイグレーション等、必要なら）
-│   │   └── migrate.py
+│   ├── tests/                       # テストコード全体のルートディレクトリ
+│   │   ├── __init__.py              # testsパッケージとして認識させるためのファイル
+│   │   ├── conftest.py              # 共通フィクスチャや設定を定義（例：TestClient、モックのSupabaseClient、JWTトークン生成など）
+│   │   ├── unit/                    # ユニットテスト用のディレクトリ（各サービスやユーティリティのテスト）
+│   │   │   ├── __init__.py
+│   │   │   ├── test_auth_service.py    # auth_service.py の関数単位のテスト
+│   │   │   ├── test_group_service.py   # group_service.py のテスト
+│   │   │   ├── test_member_service.py  # member_service.py のテスト
+│   │   │   ├── test_todo_service.py    # todo_service.py のテスト
+│   │   │   └── test_supabase_client.py # supabase_client.py のユニットテスト（外部APIモック化）
+│   │   ├── integration/             # 統合テスト用のディレクトリ（APIルーティング層や、サービスとutilsの連携テスト）
+│   │   │   ├── __init__.py
+│   │   │   ├── test_auth_routes.py     # /auth/google/～ のルーティングおよび認証処理の統合テスト
+│   │   │   ├── test_group_routes.py    # /groups ルート関連のテスト（正常系・異常系を含む）
+│   │   │   ├── test_member_routes.py   # /groups/{group_id}/members のテスト
+│   │   │   └── test_todo_routes.py     # /groups/{group_id}/todos のテスト
+│   │   └── e2e/                     # エンドツーエンドテスト用ディレクトリ（必要に応じてブラウザ操作やAPI全体のテスト）
+│   │       ├── __init__.py
+│   │       └── test_end_to_end.py   # アプリ全体のフロー（ログインからグループ作成、Todo登録までなど）のテスト
 │   ├── docker-compose.yml         # コンテナ構築用設定（FastAPIとSupabase）
 │   ├── Dockerfile                 # アプリケーションDockerイメージビルド設定
 │   ├── requirements.txt           # Pythonパッケージ一覧
-│   └── README.md                  # プロジェクト概要、セットアップ手順
